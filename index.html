@@ -232,19 +232,24 @@
     .back-sentence-de {
       font-family: 'Playfair Display', serif;
       font-size: 15px;
-      line-height: 1.65;
+      line-height: 1.75;
       color: var(--text);
       text-align: center;
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
+      word-break: normal;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      lang: de;
     }
 
     .back-sentence-de em {
       color: var(--accent);
       font-style: normal;
       font-weight: 700;
+      display: inline;
     }
 
     .back-sentence-en {
@@ -588,9 +593,12 @@
       backTrans.textContent = w.translation;
       backSentEn.textContent = w.sentenceTranslation;
 
-      // Highlight the word in the sentence
-      const stem = w.word.split(' ').pop(); // handle articles
-      const regex = new RegExp(`(${stem})`, 'gi');
+      // Highlight the word in the sentence (skip articles: der/die/das/ein/eine)
+      const ARTICLES = new Set(['der','die','das','ein','eine','einen','einem','einer','des','dem','den']);
+      const parts = w.word.split(' ').filter(p => !ARTICLES.has(p.toLowerCase()));
+      const escaped = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+      const safe = escaped.length ? escaped.join('|') : w.word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`\\b(${safe})\\b`, 'gi');
       backSentDe.innerHTML = w.sentence.replace(regex, '<em>$1</em>');
 
       // Stats
