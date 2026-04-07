@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Wortschatz" />
+  <meta name="theme-color" content="#0f0e17" />
+  <link rel="manifest" href="manifest.json" />
+  <title>Wortschatz</title>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap');
+
+    :root {
+      --bg: #0f0e17;
+      --surface: #1a1828;
+      --card: #211f32;
+      --card-back: #1e2d3d;
+      --accent: #e8c547;
+      --accent2: #ff6b6b;
+      --green: #5cb85c;
+      --text: #fffffe;
+      --text-muted: #a7a9be;
+      --border: rgba(255,255,255,0.07);
+      --radius: 20px;
+      --shadow: 0 24px 60px rgba(0,0,0,0.5);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      overflow: hidden;
+      user-select: none;
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom);
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 24px 12px;
+    }
+
+    .app-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 22px;
+      letter-spacing: -0.3px;
+      color: var(--accent);
+    }
+
+    .session-info {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 300;
+    }
+
+    /* ── Progress bar ── */
+    .progress-wrap {
+      padding: 0 24px 20px;
+    }
+
+    .progress-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 2px;
+      transition: width 0.4s ease;
+    }
+
+    /* ── Stats row ── */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      padding: 0 24px 24px;
+    }
+
+    .stat {
+      flex: 1;
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 10px 14px;
+      text-align: center;
+      border: 1px solid var(--border);
+    }
+
+    .stat-val {
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1;
+    }
+
+    .stat-val.green { color: var(--green); }
+    .stat-val.red { color: var(--accent2); }
+    .stat-val.yellow { color: var(--accent); }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      margin-top: 4px;
+      font-weight: 400;
+    }
+
+    /* ── Card area ── */
+    .card-area {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 24px;
+      perspective: 1200px;
+    }
+
+    .card-scene {
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 3/4;
+      position: relative;
+    }
+
+    .card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+    }
+
+    .card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 36px 32px;
+      box-shadow: var(--shadow);
+    }
+
+    .card-front {
+      background: var(--card);
+      border: 1px solid var(--border);
+      justify-content: space-between;
+    }
+
+    .card-back {
+      background: var(--card-back);
+      border: 1px solid rgba(100,150,255,0.12);
+      transform: rotateY(180deg);
+      justify-content: space-between;
+    }
+
+    .card-top-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .card-word {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(28px, 8vw, 42px);
+      font-weight: 700;
+      line-height: 1.15;
+      color: var(--text);
+      text-align: center;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tap-hint {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      opacity: 0.6;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .tap-hint svg { opacity: 0.5; }
+
+    /* Back side content */
+    .back-translation {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(18px, 5vw, 26px);
+      font-style: italic;
+      color: var(--accent);
+      text-align: center;
+      flex: 0 0 auto;
+      padding: 8px 0;
+    }
+
+    .back-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 16px 0;
+    }
+
+    .back-sentence-de {
+      font-family: 'Playfair Display', serif;
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text);
+      text-align: center;
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .back-sentence-de em {
+      color: var(--accent);
+      font-style: normal;
+      font-weight: 700;
+    }
+
+    .back-sentence-en {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-align: center;
+      font-style: italic;
+      line-height: 1.5;
+      font-weight: 300;
+    }
+
+    /* ── Swipe overlay ── */
+    .swipe-overlay {
+      position: absolute;
+      inset: 0;
+      border-radius: var(--radius);
+      pointer-events: none;
+      opacity: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: 'Playfair Display', serif;
+      transition: opacity 0.1s;
+    }
+
+    .swipe-overlay.know {
+      background: rgba(92,184,92,0.15);
+      border: 2px solid rgba(92,184,92,0.4);
+      color: var(--green);
+    }
+
+    .swipe-overlay.dontknow {
+      background: rgba(255,107,107,0.15);
+      border: 2px solid rgba(255,107,107,0.4);
+      color: var(--accent2);
+    }
+
+    /* ── Buttons ── */
+    .action-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 20px 24px;
+      padding-bottom: max(20px, env(safe-area-inset-bottom));
+    }
+
+    .action-row.hidden { opacity: 0; pointer-events: none; }
+
+    .btn {
+      border: none;
+      border-radius: 14px;
+      padding: 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.15s, opacity 0.15s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      letter-spacing: 0.2px;
+    }
+
+    .btn:active { transform: scale(0.96); }
+
+    .btn-know {
+      background: rgba(92,184,92,0.15);
+      color: var(--green);
+      border: 1px solid rgba(92,184,92,0.3);
+    }
+
+    .btn-dontknow {
+      background: rgba(255,107,107,0.15);
+      color: var(--accent2);
+      border: 1px solid rgba(255,107,107,0.3);
+    }
+
+    /* ── Speak button ── */
+    .speak-btn {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: var(--text-muted);
+    }
+
+    .speak-btn:active { background: rgba(255,255,255,0.15); }
+
+    /* ── Done screen ── */
+    #done-screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      padding: 40px 32px;
+      text-align: center;
+    }
+
+    .done-emoji { font-size: 64px; margin-bottom: 24px; }
+
+    .done-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      color: var(--accent);
+    }
+
+    .done-sub {
+      color: var(--text-muted);
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 280px;
+      margin-bottom: 32px;
+    }
+
+    .done-stats {
+      display: flex;
+      gap: 24px;
+      margin-bottom: 40px;
+    }
+
+    .done-stat {
+      text-align: center;
+    }
+
+    .done-stat-val {
+      font-size: 36px;
+      font-weight: 700;
+    }
+
+    .done-stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+
+    .btn-restart {
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 14px;
+      padding: 16px 40px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+
+    .btn-restart:active { opacity: 0.8; }
+
+    /* ── Transitions ── */
+    .card-scene {
+      transition: opacity 0.2s, transform 0.2s;
+    }
+
+    .card-scene.leaving-know {
+      opacity: 0;
+      transform: translateX(80px) rotate(8deg);
+    }
+
+    .card-scene.leaving-dontknow {
+      opacity: 0;
+      transform: translateX(-80px) rotate(-8deg);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Main session view -->
+  <div id="session-view" style="display:flex; flex-direction:column; height:100%;">
+
+    <header>
+      <span class="app-title">Wortschatz</span>
+      <span class="session-info" id="counter-label">1 / 10</span>
+    </header>
+
+    <div class="progress-wrap">
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat">
+        <div class="stat-val green" id="stat-know">0</div>
+        <div class="stat-label">Gewusst</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val red" id="stat-dontknow">0</div>
+        <div class="stat-label">Nochmal</div>
+      </div>
+      <div class="stat">
+        <div class="stat-val yellow" id="stat-left">10</div>
+        <div class="stat-label">Übrig</div>
+      </div>
+    </div>
+
+    <div class="card-area">
+      <div class="card-scene" id="card-scene">
+        <div class="card" id="card">
+
+          <!-- Front -->
+          <div class="card-face card-front">
+            <div class="card-top-label">Deutsch</div>
+            <div class="card-word" id="front-word">die Sehnsucht</div>
+            <div class="tap-hint">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M7 16V4m0 0L3 8m4-4l4 4"/>
+                <path d="M17 8v12m0 0l4-4m-4 4l-4-4"/>
+              </svg>
+              Tippen zum Umdrehen
+            </div>
+            <div class="swipe-overlay know" id="overlay-know">✓ Gewusst</div>
+            <div class="swipe-overlay dontknow" id="overlay-dontknow">✗ Nochmal</div>
+          </div>
+
+          <!-- Back -->
+          <div class="card-face card-back">
+            <div class="card-top-label">Übersetzung</div>
+            <div class="back-translation" id="back-translation">longing, yearning</div>
+            <div class="back-divider"></div>
+            <div class="back-sentence-de" id="back-sentence-de">
+              Er fühlte eine tiefe <em>Sehnsucht</em> nach seiner Heimat.
+            </div>
+            <div>
+              <div class="back-divider"></div>
+              <div class="back-sentence-en" id="back-sentence-en">He felt a deep longing for his homeland.</div>
+            </div>
+            <button class="speak-btn" id="speak-btn" title="Vorlesen">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="action-row hidden" id="action-row">
+      <button class="btn btn-dontknow" id="btn-dontknow">✗ Nochmal</button>
+      <button class="btn btn-know" id="btn-know">✓ Gewusst</button>
+    </div>
+
+  </div>
+
+  <!-- Done screen -->
+  <div id="done-screen">
+    <div class="done-emoji">🎉</div>
+    <div class="done-title">Fertig!</div>
+    <div class="done-sub">Du hast alle Karten dieser Runde durchgegangen. Gut gemacht!</div>
+    <div class="done-stats">
+      <div class="done-stat">
+        <div class="done-stat-val green" id="done-know">0</div>
+        <div class="done-stat-label">Gewusst</div>
+      </div>
+      <div class="done-stat">
+        <div class="done-stat-val red" id="done-dontknow">0</div>
+        <div class="done-stat-label">Nochmal</div>
+      </div>
+    </div>
+    <button class="btn-restart" id="btn-restart">Nochmal üben →</button>
+  </div>
+
+  <script src="words.js"></script>
+  <script>
+    // ── State ──────────────────────────────────────────────
+    let deck = [];
+    let current = 0;
+    let flipped = false;
+    let knowCount = 0;
+    let dontKnowCount = 0;
+
+    // ── Elements ───────────────────────────────────────────
+    const card         = document.getElementById('card');
+    const cardScene    = document.getElementById('card-scene');
+    const frontWord    = document.getElementById('front-word');
+    const backTrans    = document.getElementById('back-translation');
+    const backSentDe   = document.getElementById('back-sentence-de');
+    const backSentEn   = document.getElementById('back-sentence-en');
+    const actionRow    = document.getElementById('action-row');
+    const counterLabel = document.getElementById('counter-label');
+    const progressFill = document.getElementById('progress-fill');
+    const statKnow     = document.getElementById('stat-know');
+    const statDont     = document.getElementById('stat-dontknow');
+    const statLeft     = document.getElementById('stat-left');
+    const overlayKnow  = document.getElementById('overlay-know');
+    const overlayDont  = document.getElementById('overlay-dontknow');
+    const speakBtn     = document.getElementById('speak-btn');
+    const sessionView  = document.getElementById('session-view');
+    const doneScreen   = document.getElementById('done-screen');
+    const doneKnow     = document.getElementById('done-know');
+    const doneDont     = document.getElementById('done-dontknow');
+
+    // ── Init ───────────────────────────────────────────────
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+      return a;
+    }
+
+    function startSession() {
+      deck = shuffle(WORDS);
+      current = 0;
+      knowCount = 0;
+      dontKnowCount = 0;
+      flipped = false;
+      card.classList.remove('flipped');
+      actionRow.classList.add('hidden');
+      sessionView.style.display = 'flex';
+      doneScreen.style.display = 'none';
+      renderCard();
+    }
+
+    function renderCard() {
+      const w = deck[current];
+      frontWord.textContent = w.word;
+      backTrans.textContent = w.translation;
+      backSentEn.textContent = w.sentenceTranslation;
+
+      // Highlight the word in the sentence
+      const stem = w.word.split(' ').pop(); // handle articles
+      const regex = new RegExp(`(${stem})`, 'gi');
+      backSentDe.innerHTML = w.sentence.replace(regex, '<em>$1</em>');
+
+      // Stats
+      const total = deck.length;
+      const done  = current;
+      counterLabel.textContent = `${current + 1} / ${total}`;
+      progressFill.style.width  = `${(done / total) * 100}%`;
+      statKnow.textContent      = knowCount;
+      statDont.textContent      = dontKnowCount;
+      statLeft.textContent      = total - done;
+    }
+
+    // ── Flip ───────────────────────────────────────────────
+    function flipCard() {
+      flipped = !flipped;
+      card.classList.toggle('flipped', flipped);
+      actionRow.classList.toggle('hidden', !flipped);
+    }
+
+    card.addEventListener('click', (e) => {
+      if (e.target === speakBtn || speakBtn.contains(e.target)) return;
+      flipCard();
+    });
+
+    // ── Verdict ────────────────────────────────────────────
+    function nextCard(knew) {
+      if (knew) knowCount++;
+      else dontKnowCount++;
+
+      const leaveClass = knew ? 'leaving-know' : 'leaving-dontknow';
+      cardScene.classList.add(leaveClass);
+
+      setTimeout(() => {
+        cardScene.classList.remove(leaveClass);
+        current++;
+
+        if (current >= deck.length) {
+          showDone();
+          return;
+        }
+
+        flipped = false;
+        card.classList.remove('flipped');
+        actionRow.classList.add('hidden');
+        renderCard();
+      }, 250);
+    }
+
+    document.getElementById('btn-know').addEventListener('click', () => nextCard(true));
+    document.getElementById('btn-dontknow').addEventListener('click', () => nextCard(false));
+    document.getElementById('btn-restart').addEventListener('click', startSession);
+
+    // ── Speech ─────────────────────────────────────────────
+    speakBtn.addEventListener('click', () => {
+      const w = deck[current];
+      if (!('speechSynthesis' in window)) return;
+      window.speechSynthesis.cancel();
+      const utt = new SpeechSynthesisUtterance(w.sentence);
+      utt.lang = 'de-DE';
+      utt.rate = 0.85;
+      window.speechSynthesis.speak(utt);
+    });
+
+    // ── Swipe support ──────────────────────────────────────
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    card.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    card.addEventListener('touchmove', e => {
+      if (!flipped) return;
+      const dx = e.touches[0].clientX - touchStartX;
+      const threshold = 30;
+      if (dx > threshold) {
+        overlayKnow.style.opacity = Math.min((dx - threshold) / 60, 1);
+        overlayDont.style.opacity = 0;
+      } else if (dx < -threshold) {
+        overlayDont.style.opacity = Math.min((-dx - threshold) / 60, 1);
+        overlayKnow.style.opacity = 0;
+      } else {
+        overlayKnow.style.opacity = 0;
+        overlayDont.style.opacity = 0;
+      }
+    }, { passive: true });
+
+    card.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      overlayKnow.style.opacity = 0;
+      overlayDont.style.opacity = 0;
+
+      if (!flipped) return;
+      if (Math.abs(dx) < Math.abs(dy) * 1.5) return; // vertical swipe — ignore
+
+      if (dx > 80) nextCard(true);
+      else if (dx < -80) nextCard(false);
+    }, { passive: true });
+
+    // ── Done ───────────────────────────────────────────────
+    function showDone() {
+      sessionView.style.display = 'none';
+      doneScreen.style.display  = 'flex';
+      doneKnow.textContent  = knowCount;
+      doneDont.textContent  = dontKnowCount;
+    }
+
+    // ── Start ──────────────────────────────────────────────
+    startSession();
+
+    // ── Service Worker ─────────────────────────────────────
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(() => {});
+    }
+  </script>
+</body>
+</html>
