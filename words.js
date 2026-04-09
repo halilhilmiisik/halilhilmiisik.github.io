@@ -1,4 +1,4 @@
-[
+const WORDS = [
   {
     "word": "der Verband",
     "translation": "association",
@@ -14537,4 +14537,4 @@
     "sentence": "Ich kann es kaum erwarten, den Film zu sehen. Jetzt wird es spannend!",
     "sentenceTranslation": "I often use der Jetzt wird es spannend! in everyday life."
   }
-]
+];
